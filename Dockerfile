@@ -41,3 +41,13 @@ RUN useradd -m -s /bin/bash studio \
     && usermod -aG ssl-cert studio
 
 EXPOSE 8444
+
+
+# Copy desktop startup script
+COPY start-desktop.sh /usr/local/bin/start-desktop.sh
+
+RUN chmod +x /usr/local/bin/start-desktop.sh
+
+# Start KasmVNC automatically
+CMD ["/usr/local/bin/start-desktop.sh"]
+
