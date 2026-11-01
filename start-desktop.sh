@@ -11,6 +11,7 @@ chown -R studio:studio /home/studio
 
 # XFCEの起動設定
 cat > /home/studio/.vnc/xstartup <<'EOF'
+touch /home/studio/.vnc/.de-was-selected
 #!/bin/sh
 exec dbus-launch --exit-with-session startxfce4
 EOF
