@@ -26,3 +26,18 @@ RUN git clone https://github.com/harry7557558/spirula-studio.git \
     && bash build_develop.bash -DSS_BACKEND=vulkan
 
 # KasmVNCと自動起動処理は次の工程で追加
+
+# Install KasmVNC for Ubuntu 24.04
+RUN wget -q \
+    https://github.com/kasmtech/KasmVNC/releases/download/v1.5.0/kasmvncserver_ubuntu_noble_1.5.0_amd64.deb \
+    -O /tmp/kasmvnc.deb \
+    && apt-get update \
+    && apt-get install -y /tmp/kasmvnc.deb \
+    && rm -f /tmp/kasmvnc.deb \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create desktop user
+RUN useradd -m -s /bin/bash studio \
+    && usermod -aG ssl-cert studio
+
+EXPOSE 8444
