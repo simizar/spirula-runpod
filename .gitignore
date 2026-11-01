@@ -1,0 +1,5 @@
+rclone.conf*
+*.b64
+.env*
+secrets/
+*.age
