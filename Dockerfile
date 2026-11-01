@@ -6,7 +6,7 @@ ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility,graphics,display
 
 RUN apt-get update && apt-get install -y \
     git cmake ninja-build build-essential \
-    pkg-config python3 \
+    pkg-config python3 rclone \
     libvulkan-dev vulkan-tools \
     libgl1-mesa-dev libx11-dev \
     libxrandr-dev libxinerama-dev \
@@ -73,6 +73,7 @@ EXPOSE 8444
 
 # Copy desktop startup script
 COPY start-desktop.sh /usr/local/bin/start-desktop.sh
+COPY init-rclone.py /usr/local/bin/init-rclone.py
 
 RUN chmod +x /usr/local/bin/start-desktop.sh
 
