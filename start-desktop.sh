@@ -26,4 +26,4 @@ printf '%s\n%s\n' "$VNC_PASSWORD" "$VNC_PASSWORD" |
 
 # 仮想デスクトップを起動
 exec runuser -u studio -- \
-  vncserver :1 -fg
+  vncserver :1 -fg -select-de XFCE
