@@ -1,7 +1,8 @@
-
 name: Build Spirula RunPod
 
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -25,10 +26,38 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Validate shell scripts
+        run: bash -n start-desktop.sh download-gdrive.sh
+
       - name: Build and push Docker image
+        id: image
         uses: docker/build-push-action@v6
         with:
           context: .
           push: true
           platforms: linux/amd64
-          tags: ghcr.io/${{ github.repository_owner }}/spirula-runpod:latest
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/spirula-runpod:latest
+            ghcr.io/${{ github.repository_owner }}/spirula-runpod:sha-${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Smoke test published image (no credentials)
+        env:
+          IMAGE: ghcr.io/${{ github.repository_owner }}/spirula-runpod@${{ steps.image.outputs.digest }}
+        run: |
+          docker run --rm --entrypoint /bin/bash "$IMAGE" -ec '
+            bash -n /usr/local/bin/start-desktop.sh /usr/local/bin/download-gdrive.sh
+            test -x /usr/local/bin/download-gdrive.sh
+            test ! -e /workspace/.private/rclone/rclone.conf
+            test ! -e /home/studio/.config/rclone/rclone.conf
+            ! command -v snap
+            runuser -u studio -- firefox --version
+            command -v vncserver
+            command -v vulkaninfo
+          '
+
+      - name: Record immutable image reference
+        env:
+          IMAGE: ghcr.io/${{ github.repository_owner }}/spirula-runpod@${{ steps.image.outputs.digest }}
+        run: echo "$IMAGE" >> "$GITHUB_STEP_SUMMARY"
