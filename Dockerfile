@@ -76,7 +76,7 @@ RUN apt-get update \
     && apt-get update \
     && apt-get install -y firefox firefox-l10n-ja \
     && firefox --version \
-    && ! dpkg-query -W snapd 2>/dev/null \
+    && test -x /usr/lib/firefox/firefox-bin \
     && rm -rf /var/lib/apt/lists/*
 
 # Create desktop user
