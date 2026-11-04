@@ -5,6 +5,10 @@ on:
     branches: [main]
   workflow_dispatch:
 
+concurrency:
+  group: desktop-image-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
   packages: write
@@ -51,7 +55,7 @@ jobs:
             test -x /usr/local/bin/download-gdrive.sh
             test ! -e /workspace/.private/rclone/rclone.conf
             test ! -e /home/studio/.config/rclone/rclone.conf
-            ! command -v snap
+            test -x /usr/lib/firefox/firefox-bin
             runuser -u studio -- firefox --version
             command -v vncserver
             command -v vulkaninfo
