@@ -9,6 +9,12 @@ set -euo pipefail
 mkdir -p /workspace
 chown studio:studio /workspace
 chmod u+rwx /workspace
+# Prepare only the managed input directory; leave other volume data untouched.
+if [[ -L /workspace/Spirula_Input ]]; then
+  echo 'Spirula_Input must be a real directory, not a symlink.' >&2
+  exit 1
+fi
+install -d -o studio -g studio -m 0755 /workspace/Spirula_Input
 python3 /usr/local/bin/init-rclone.py
 unset RCLONE_CONF_B64
 

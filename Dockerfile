@@ -25,7 +25,6 @@ RUN git clone https://github.com/harry7557558/spirula-studio.git \
     && git checkout 6ad73ef \
     && bash build_develop.bash -DSS_BACKEND=vulkan
 
-# KasmVNCと自動起動処理は次の工程で追加
 
 
 # Install KasmVNC 1.5.0 for Ubuntu 24.04
@@ -64,6 +63,22 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 
+# Mozilla's native DEB avoids Ubuntu's snap transition package.
+# Keep this after the expensive, unchanged Spirula/KasmVNC layers.
+RUN apt-get update \
+    && apt-get install -y gnupg fonts-noto-cjk \
+    && install -d -m 0755 /etc/apt/keyrings \
+    && curl -fsSL https://packages.mozilla.org/apt/repo-signing-key.gpg \
+       -o /etc/apt/keyrings/packages.mozilla.org.asc \
+    && test "$(gpg --show-keys --with-colons /etc/apt/keyrings/packages.mozilla.org.asc | awk -F: '$1 == "fpr" {print $10; exit}')" = "35BAA0B33E9EB396F59CA838C0BA5CE6DC6315A3" \
+    && printf '%s\n' 'deb [signed-by=/etc/apt/keyrings/packages.mozilla.org.asc] https://packages.mozilla.org/apt mozilla main' > /etc/apt/sources.list.d/mozilla.list \
+    && printf '%s\n' 'Package: *' 'Pin: origin packages.mozilla.org' 'Pin-Priority: 1000' '' 'Package: firefox' 'Pin: release o=Ubuntu' 'Pin-Priority: -1' > /etc/apt/preferences.d/mozilla \
+    && apt-get update \
+    && apt-get install -y firefox firefox-l10n-ja \
+    && firefox --version \
+    && ! dpkg-query -W snapd 2>/dev/null \
+    && rm -rf /var/lib/apt/lists/*
+
 # Create desktop user
 RUN useradd -m -s /bin/bash studio \
     && usermod -aG ssl-cert studio
@@ -74,8 +89,9 @@ EXPOSE 8444
 # Copy desktop startup script
 COPY start-desktop.sh /usr/local/bin/start-desktop.sh
 COPY init-rclone.py /usr/local/bin/init-rclone.py
+COPY download-gdrive.sh /usr/local/bin/download-gdrive.sh
 
-RUN chmod +x /usr/local/bin/start-desktop.sh
+RUN chmod 0755 /usr/local/bin/start-desktop.sh /usr/local/bin/download-gdrive.sh
 
 # Start KasmVNC automatically
 CMD ["/usr/local/bin/start-desktop.sh"]

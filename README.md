@@ -1,3 +1,60 @@
+# 追加機能の使い方（2026-11-04）
+
+- GUIブラウザ: Mozilla公式APTのFirefox DEB版（日本語パック・日本語フォント）。snap不要。XFCEのアプリ一覧からFirefoxを開くか、studio端末で `firefox` を実行。
+- Driveコピー: イメージに `/usr/local/bin/download-gdrive.sh` を配置。起動時の自動ダウンロードは行わない。
+- 起動時に `/workspace` と `/workspace/Spirula_Input` をstudioが書き込めるよう準備。既存フォルダ内部のファイル所有者は再帰変更しない。以前rootが作った既存ファイルは個別の権限修正が必要な場合がある。
+- CUDAベースイメージ、NVIDIA環境変数、SpirulaのコミットとVulkanビルド、KasmVNC 1.5.0、XFCE起動方法は維持。
+
+## 1. ビルドする
+
+mainへ反映するとGitHub Actionsが自動ビルド。手動の場合は Actions → Build Spirula RunPod → Run workflow。
+完了後、Summaryの `ghcr.io/simizar/spirula-runpod@sha256:...` を控える。
+バージョンを特定できる `sha-コミットID` タグも付く。ビルドにはGoogle認証情報を渡さない。
+最後のsmoke testはブラウザ・コマンドの存在と秘密ファイルがないことを確認する。GPU/GUIの実動作はPodで確認する。
+
+## 2. 次のPodを起動する
+
+1. 現Podのrclone設定を安全に退避する（下記の既存手順を参照）。
+2. 新Podのイメージに上記digestを指定する。
+3. GPU、HTTPポート8444、VNC_PASSWORDは現在と同じ設定を使用する。起動コマンドはイメージ既定を使い、root起動を維持する。
+4. 永続ボリュームを `/workspace` にマウントする。
+5. 新しいボリュームなら `RCLONE_CONF_B64` にRunPod Secretを参照させる。既存の永続rclone設定があればそちらを優先する。
+6. デスクトップへ接続し、studio端末を開く。
+
+## 3. Driveから取得する
+
+まずコピー予定を確認:
+
+```sh
+download-gdrive.sh --dry-run
+```
+
+次に実行:
+
+```sh
+download-gdrive.sh
+```
+
+`gdrive:runpod_workspace/input` の中身を `/workspace/Spirula_Input` にコピーする。
+同一ファイルはスキップし、コピー先にしかないファイルは削除しない。再実行も可能。
+remote名は `gdrive` が必要。認証内容をコマンドへ直接書かない。
+
+## 4. 新Podで動作確認する
+
+```sh
+firefox
+nvidia-smi
+vulkaninfo --summary
+```
+
+Firefoxでページを開く。Spirula Studioは従来の方法で起動し、入力を開いて既知のGPU処理を試す。
+Podを再起動し、再びDriveコピーとSpirulaを確認してから旧Podを終了する。
+イメージのビルドだけでは既存Podは更新されない。
+
+参考: [Mozilla公式DEB導入](https://support.mozilla.org/en-US/kb/install-firefox-linux)、[rclone copy](https://rclone.org/commands/rclone_copy/)。
+
+---
+
 # Spirula Studio GPU desktop for RunPod
 
 ## 変更内容
@@ -45,7 +102,7 @@ VNC_PASSWORD={{ RUNPOD_SECRET_spirula_vnc_password }}
 
 `spirula_vnc_password` も別途作成する。rclone設定が暗号化されている場合だけ `RCLONE_CONFIG_PASS` に別のRunPod Secretを参照させる。これはrclone実行にも必要なので解除しない。
 
-Secretはビルド引数・DockerfileのENV・GitHub Actionsへ渡さない。`.dockerignore` はビルドに必要な3ファイルのみ許可する。Gitの除外設定だけでは漏えいを防げないため、秘密ファイルは最初からリポジトリ外に置く。
+Secretはビルド引数・DockerfileのENV・GitHub Actionsへ渡さない。`.dockerignore` はビルドに必要なファイルのみ許可する。Gitの除外設定だけでは漏えいを防げないため、秘密ファイルは最初からリポジトリ外に置く。
 
 ## 3. ビルドと新しいPod
 

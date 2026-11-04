@@ -2,3 +2,4 @@
 !Dockerfile
 !start-desktop.sh
 !init-rclone.py
+!download-gdrive.sh
